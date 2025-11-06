@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 import random
+# NEW IMPORTS for image handling
+from PIL import Image, ImageTk 
+import os # NEW IMPORT for file path handling
 
 # --- Global Configuration ---
 QUIZ_LENGTH = 10
@@ -100,7 +103,35 @@ class BaseQuizFrame(tk.Frame):
 class WelcomeFrame(BaseQuizFrame):
     def __init__(self, parent, controller):
         super().__init__(parent, controller)
-        tk.Label(self, text="🧠 Welcome to the Maths Quiz! 🔢", font=TITLE_FONT).grid(row=2, column=1, pady=(150, 40))
+        
+        self.logo_image = None
+        
+        # --- MODIFIED IMAGE LOADING WITH PATH CHECK ---
+        image_name = 'welcome.png'
+        # Get the directory of the current Python script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Construct the full path to the image
+        full_path = os.path.join(script_dir, image_name)
+        
+        # Print the path being checked (helps with debugging in the console)
+        print(f"Checking for image file at: {full_path}")
+        
+        try:
+            # Check if the file exists before attempting to open
+            if os.path.exists(full_path):
+                pil_image = Image.open(full_path).resize((400, 200), Image.Resampling.LANCZOS)
+                self.logo_image = ImageTk.PhotoImage(pil_image)
+                tk.Label(self, image=self.logo_image).grid(row=1, column=1, pady=(50, 20), sticky="n")
+            else:
+                # Fallback if image file is not found
+                tk.Label(self, text=f"[File '{image_name}' not found at: {full_path}]", font=('Arial', 12, 'italic'), fg='red').grid(row=1, column=1, pady=(50, 20), sticky="n")
+        except Exception as e:
+            # Fallback for other errors (like missing PIL or corrupted image)
+            print(f"Error loading image: {e}")
+            tk.Label(self, text="[Welcome Graphic - Error]", font=('Arial', 12, 'italic')).grid(row=1, column=1, pady=(50, 20), sticky="n")
+        # -----------------------------------------------
+
+        tk.Label(self, text="🧠 Welcome to the Maths Quiz! 🔢", font=TITLE_FONT).grid(row=2, column=1, pady=20)
         tk.Button(self, text="▶️ Play Now", command=lambda: controller.show_frame("DifficultyFrame"), 
                   width=20, height=3, font=MEDIUM_FONT, bg='#4CAF50', fg='white').grid(row=3, column=1, pady=15)
         tk.Button(self, text="🔊 Sound (TBD)", command=lambda: messagebox.showinfo("Feature", "Sound functionality not yet implemented."), 
