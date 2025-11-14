@@ -3,7 +3,13 @@ from tkinter import messagebox
 import random
 import os
 
-# --- JOKE DATA PROVIDED BY THE USER ---
+# --- NEW COLOR PALETTE ---
+COLOR_BACKGROUND = "#EEF0FF"
+COLOR_ACCENT = "#7367F0"
+COLOR_DARK_TEXT = "#3A3A3A"
+COLOR_WHITE = "#FFFFFF"
+
+# --- JOKE DATA PROVIDED BY THE USER (UNCHANGED) ---
 USER_JOKES = [
     "Why did the chicken cross the road?To get to the other side.",
     "What happens if you boil a clown?You get a laughing stock.",
@@ -51,26 +57,22 @@ class JokeApp:
         self.master = master
         master.title("Daily Dose of LOLs")
         
-        # --- CHANGES MADE HERE TO ALLOW RESIZING/MAXIMIZING ---
-        # Removed: master.geometry("375x667")
-        # Removed: master.resizable(False, False)
-        # Optional: Set a starting size
+        # Allow resizing and maximization
         master.geometry("800x600") 
-        master.minsize(400, 400) # Set a minimum resize limit
-        # -----------------------------------------------------
-
+        master.minsize(400, 400) 
+        
         self.file_path = 'randomJokes.txt'
         self.current_joke = None
         self.jokes = self.load_jokes()
 
-        # --- Frames for different "pages" ---
-        self.welcome_frame = tk.Frame(master, bg="#212121") # Dark Grey (Close to Image 3)
-        self.joke_frame = tk.Frame(master, bg="#2196F3")   # Bright Blue (Close to Image 1 & 2)
+        # --- Frames for different "pages" using the new colors ---
+        self.welcome_frame = tk.Frame(master, bg=COLOR_BACKGROUND) 
+        self.joke_frame = tk.Frame(master, bg=COLOR_BACKGROUND)   
 
         self.create_welcome_page()
         self.create_joke_page()
 
-        self.show_frame(self.welcome_frame) # Start with the welcome page
+        self.show_frame(self.welcome_frame)
 
     def show_frame(self, frame):
         """Hides all frames and shows the selected frame."""
@@ -79,41 +81,39 @@ class JokeApp:
         frame.pack(fill=tk.BOTH, expand=True)
         
         if frame == self.joke_frame:
-            self.show_setup() # Automatically load a new joke when entering joke page
+            self.show_setup()
 
     def create_welcome_page(self):
         """Configures the welcome page."""
-        welcome_bg_color = "#212121"
-        text_color = "white"
         
-        self.welcome_frame.config(bg=welcome_bg_color)
+        self.welcome_frame.config(bg=COLOR_BACKGROUND)
         
-        # Header (Top part is darker/placeholder)
-        header_placeholder = tk.Frame(self.welcome_frame, bg="#1a1a1a", height=30)
+        # Header (Placeholder, using Accent color)
+        header_placeholder = tk.Frame(self.welcome_frame, bg=COLOR_ACCENT, height=30)
         header_placeholder.pack(fill=tk.X)
 
         # Title
         title = tk.Label(self.welcome_frame, text="Your Daily Dose\nof LOLs", 
-                         font=('Arial', 28, 'bold'), fg=text_color, bg=welcome_bg_color,
+                         font=('Arial', 28, 'bold'), fg=COLOR_DARK_TEXT, bg=COLOR_BACKGROUND,
                          justify=tk.CENTER)
         title.pack(pady=(60, 30))
 
         # Description
         description = tk.Label(self.welcome_frame, text="Kick start every day with\nside-splitting jokes.",
-                               font=('Arial', 18), fg="#BDBDBD", bg=welcome_bg_color,
-                               justify=tk.CENTER, wraplength=500) # Adjusted wraplength for larger screen
+                               font=('Arial', 18), fg=COLOR_DARK_TEXT, bg=COLOR_BACKGROUND,
+                               justify=tk.CENTER, wraplength=500)
         description.pack(pady=20)
 
         # Call to action
         cta = tk.Label(self.welcome_frame, text="Ready for a comedy break?",
-                       font=('Arial', 18), fg=text_color, bg=welcome_bg_color,
-                       justify=tk.CENTER, wraplength=500) # Adjusted wraplength for larger screen
+                       font=('Arial', 18), fg=COLOR_ACCENT, bg=COLOR_BACKGROUND,
+                       justify=tk.CENTER, wraplength=500)
         cta.pack(pady=(20, 80))
 
-        # MAKE ME LAUGH Button
+        # MAKE ME LAUGH Button (White text on Purple accent)
         make_me_laugh_button = tk.Button(self.welcome_frame, text="MAKE ME LAUGH", 
                                          command=lambda: self.show_frame(self.joke_frame),
-                                         font=('Arial', 16, 'bold'), bg="white", fg="#212121",
+                                         font=('Arial', 16, 'bold'), bg=COLOR_ACCENT, fg=COLOR_WHITE,
                                          relief=tk.FLAT, padx=30, pady=10, borderwidth=0)
         make_me_laugh_button.pack(pady=20)
         make_me_laugh_button.config(width=20) 
@@ -121,60 +121,54 @@ class JokeApp:
     def create_joke_page(self):
         """Configures the joke display page."""
         
-        joke_bg_color = "#2196F3" # Bright blue
-        text_color = "white"
-        
-        self.joke_frame.config(bg=joke_bg_color)
+        self.joke_frame.config(bg=COLOR_BACKGROUND)
 
-        # --- Header (Red Bar) ---
-        header_frame = tk.Frame(self.joke_frame, bg="#F44336", height=50) # Red header
+        # --- Header (Purple Accent Bar) ---
+        header_frame = tk.Frame(self.joke_frame, bg=COLOR_ACCENT, height=50) 
         header_frame.pack(fill=tk.X)
         
         # Header title
         header_title = tk.Label(header_frame, text="Alexa Tell Me A Joke", 
-                                font=('Arial', 18, 'bold'), fg=text_color, bg="#F44336")
+                                font=('Arial', 18, 'bold'), fg=COLOR_WHITE, bg=COLOR_ACCENT)
         header_title.pack(side=tk.LEFT, padx=15, pady=10)
 
         # Quit button
         menu_button = tk.Button(header_frame, text="QUIT", command=self.master.quit,
-                                font=('Arial', 10, 'bold'), fg=text_color, bg="#F44336",
+                                font=('Arial', 10, 'bold'), fg=COLOR_WHITE, bg=COLOR_ACCENT,
                                 relief=tk.FLAT, padx=10)
         menu_button.pack(side=tk.RIGHT, padx=15, pady=10)
 
         # --- Joke Display ---
         self.joke_text_label = tk.Label(self.joke_frame, text="", 
-                                        font=('Arial', 24, 'bold'), fg=text_color, bg=joke_bg_color,
-                                        wraplength=800, justify=tk.CENTER) # Increased wraplength
+                                        font=('Arial', 24, 'bold'), fg=COLOR_DARK_TEXT, bg=COLOR_BACKGROUND,
+                                        wraplength=800, justify=tk.CENTER)
         self.joke_text_label.pack(pady=(50, 40), padx=20)
 
-        # --- Question Mark Button (Show Punchline) ---
-        # Canvas used to create the large circular button structure
+        # --- Question Mark Button (Show Punchline - Purple Accent) ---
         self.q_mark_canvas = tk.Canvas(self.joke_frame, width=120, height=120, 
-                                       bg=joke_bg_color, highlightthickness=0)
-        self.q_mark_canvas.pack(pady=20, expand=True) # Use expand=True to vertically center
+                                       bg=COLOR_BACKGROUND, highlightthickness=0)
+        self.q_mark_canvas.pack(pady=20, expand=True)
         
-        # Draw the Orange circle
-        self.q_mark_canvas.create_oval(5, 5, 115, 115, fill="#FF9800", outline="#E65100", width=4)
+        # Draw the Purple circle
+        self.q_mark_canvas.create_oval(5, 5, 115, 115, fill=COLOR_ACCENT, outline=COLOR_ACCENT, width=4)
         # Add the question mark text
-        self.q_mark_canvas.create_text(60, 60, text="?", font=('Arial', 70, 'bold'), fill="white")
+        self.q_mark_canvas.create_text(60, 60, text="?", font=('Arial', 70, 'bold'), fill=COLOR_WHITE)
         self.q_mark_canvas.bind("<Button-1>", self.show_punchline_event) 
         self.q_mark_canvas.config(cursor="hand2")
 
         # --- Navigation Buttons ---
-        nav_frame = tk.Frame(self.joke_frame, bg=joke_bg_color)
+        nav_frame = tk.Frame(self.joke_frame, bg=COLOR_BACKGROUND)
         nav_frame.pack(side=tk.BOTTOM, pady=30)
 
-        # Previous/Next buttons placed in the button frame for layout
+        # Prev/Next buttons (Dark Text on White)
         
-        # Prev Joke button (Left Arrow)
         self.prev_joke_button = tk.Button(nav_frame, text="PREV", command=self.show_setup, 
-                                        font=('Arial', 12, 'bold'), fg="#2196F3", bg="white",
+                                        font=('Arial', 12, 'bold'), fg=COLOR_DARK_TEXT, bg=COLOR_WHITE,
                                         width=8, relief=tk.FLAT)
         self.prev_joke_button.pack(side=tk.LEFT, padx=10)
 
-        # Next Joke button (Right Arrow)
         self.next_joke_button = tk.Button(nav_frame, text="NEXT", command=self.show_setup,
-                                        font=('Arial', 12, 'bold'), fg="#2196F3", bg="white",
+                                        font=('Arial', 12, 'bold'), fg=COLOR_DARK_TEXT, bg=COLOR_WHITE,
                                         width=8, relief=tk.FLAT)
         self.next_joke_button.pack(side=tk.RIGHT, padx=10)
 
@@ -200,9 +194,6 @@ class JokeApp:
                         punchline = parts[1].strip()
                         jokes_list.append((setup, punchline))
                         
-            if not jokes_list:
-                return []
-                
             return jokes_list
             
         except Exception as e:
@@ -219,17 +210,17 @@ class JokeApp:
     def show_setup(self):
         """Selects a new joke, displays the setup, and updates button states."""
         
-        # Reset canvas state (re-enable click and set color to initial orange)
+        # Reset canvas state (re-enable click and set color to initial accent)
         self.q_mark_canvas.config(state=tk.NORMAL, cursor="hand2")
-        self.q_mark_canvas.itemconfigure(1, fill="#FF9800")
+        self.q_mark_canvas.itemconfigure(1, fill=COLOR_ACCENT)
         
         if self.get_random_joke():
             setup = self.current_joke[0]
-            # Reset color to white for setup
-            self.joke_text_label.config(text=f"Q: {setup}?", font=('Arial', 24, 'bold'), fg="white") 
+            # Setup text color is Dark Grey
+            self.joke_text_label.config(text=f"Q: {setup}?", font=('Arial', 24, 'bold'), fg=COLOR_DARK_TEXT) 
         else:
             self.joke_text_label.config(text="No jokes available. Check the file.", 
-                                        font=('Arial', 18), fg="white")
+                                        font=('Arial', 18), fg=COLOR_DARK_TEXT)
             self.q_mark_canvas.config(state=tk.DISABLED, cursor="")
 
     def show_punchline_event(self, event):
@@ -241,13 +232,14 @@ class JokeApp:
         if self.current_joke:
             punchline = self.current_joke[1]
             
-            # Append punchline, changing the text color to yellow (mimics image)
+            # Append punchline, setting the punchline text to Purple Accent
             full_text = self.joke_text_label.cget("text") + f"\n\nA: {punchline}"
-            self.joke_text_label.config(text=full_text, font=('Arial', 24, 'bold'), fg="#FFEB3B") # Yellow
+            self.joke_text_label.config(text=full_text, font=('Arial', 24, 'bold'), fg=COLOR_ACCENT)
             
             # Disable the punchline functionality
             self.q_mark_canvas.config(state=tk.DISABLED, cursor="") 
-            self.q_mark_canvas.itemconfigure(1, fill="#FFC107") # Change circle color to indicate used
+            # Slightly change circle color to indicate used/disabled (using a lighter accent color)
+            self.q_mark_canvas.itemconfigure(1, fill="#998DF9") 
 
 
 if __name__ == "__main__":
