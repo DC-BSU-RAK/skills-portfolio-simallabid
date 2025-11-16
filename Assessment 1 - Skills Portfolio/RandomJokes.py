@@ -5,44 +5,37 @@ import random
 import os
 import pygame
 
-# --- NEW VIBRANT COLOR PALETTE ---
-COLOR_BACKGROUND = "#FFFACD"  # Bright Light Yellow
-COLOR_ACCENT = "#00BFFF"      # Vibrant Electric Blue
-COLOR_DARK_TEXT = "#8B008B"   # Rich Magenta (used for setup/title)
-COLOR_WHITE = "#FFFFFF"       # High contrast white
+#colors used in the game
+COLOR_BACKGROUND = "#FFFACD
+COLOR_ACCENT = "#00BFFF"
+COLOR_DARK_TEXT = "#8B008B"
+COLOR_WHITE = "#FFFFFF" 
 
-# --- FONT FAMILY NAME ---
+#font name
 CUSTOM_FONT_FAMILY = "Londrina Shadow"
 
-# The JokeApp expects 'randomJokes.txt', sound files, and emoji images in the same folder.
-# REQUIRED EMOJI IMAGE FILES: 'laughing_emoji_1.png', 'laughing_emoji_2.png', 'laughing_emoji_3.png'
-
-class Emoji:
-    """
-    Represents a single floating emoji, initialized with a pre-loaded PhotoImage object.
-    """
+#I took assistance from AI a little to makde these emojis float
+class Emoji:  
+   #this is for a single floating emoji. It uses a PhotoImage object so Tkinter can draw it on the canvas
     def __init__(self, canvas, image, x, y, speed_x, speed_y):
         self.canvas = canvas
-        self.image = image  # Expects a PhotoImage object
+        self.image = image\
         
-        # Create the image item on the canvas
         self.id = self.canvas.create_image(x, y, image=self.image, anchor=tk.CENTER)
         self.speed_x = speed_x
         self.speed_y = speed_y
 
     def move(self):
-        """Moves the emoji and handles boundary collisions."""
         self.canvas.move(self.id, self.speed_x, self.speed_y)
         x1, y1, x2, y2 = self.canvas.bbox(self.id)
 
-        # Get canvas dimensions (must be called when canvas is fully rendered)
+        #Get canvas dimensions
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
 
-        # Reverse direction if hitting horizontal boundary
+        
         if x2 >= canvas_width or x1 <= 0:
             self.speed_x *= -1 
-        # Reverse direction if hitting vertical boundary
         if y2 >= canvas_height or y1 <= 0:
             self.speed_y *= -1 
 
@@ -51,7 +44,7 @@ class JokeApp:
         self.master = master
         master.title("Daily Dose of LOLs")
 
-        # --- PYGAME INITIALIZATION FOR SOUND & MUSIC ---
+
         self.sound_enabled = False
         self.music_enabled = False
         self.bg_music_file = 'jokesbg.mp3'
@@ -65,6 +58,7 @@ class JokeApp:
             print("Sound files loaded successfully.")
             self.sound_enabled = True
 
+            #Load and start the background music if the file exists
             if os.path.exists(self.bg_music_file):
                 pygame.mixer.music.load(self.bg_music_file)
                 print(f"Background music '{self.bg_music_file}' loaded.")
@@ -79,9 +73,8 @@ class JokeApp:
                                    "Could not load all audio files. Audio features disabled.")
             self.sound_enabled = False
             self.music_enabled = False
-        # ----------------------------------------
 
-        # --- Define Custom Fonts ---
+        #Define Custom Fonts
         try:
             self.font_large = font.Font(family=CUSTOM_FONT_FAMILY, size=28, weight='bold')
             self.font_title = font.Font(family=CUSTOM_FONT_FAMILY, size=40, weight='bold')
@@ -90,6 +83,7 @@ class JokeApp:
             self.font_nav = font.Font(family=CUSTOM_FONT_FAMILY, size=12, weight='bold')
             self.font_header = font.Font(family=CUSTOM_FONT_FAMILY, size=18, weight='bold')
         except Exception:
+            #Fallback to a standard font if the custom one is missing
             print(f"Warning: Could not load custom font '{CUSTOM_FONT_FAMILY}'. Falling back to Arial.")
             self.font_large = font.Font(family='Arial', size=28, weight='bold')
             self.font_title = font.Font(family='Arial', size=40, weight='bold')
@@ -105,13 +99,12 @@ class JokeApp:
         self.current_joke = None
         self.jokes = self.load_jokes()
 
-        # --- Frames for different "pages" using the new colors ---
+        #Frames for different "pages"
         self.welcome_frame = tk.Frame(master, bg=COLOR_BACKGROUND)
         self.joke_frame = tk.Frame(master, bg=COLOR_BACKGROUND)
 
-        # Emoji lists (for animation and persistence)
         self.emojis = []
-        self.emoji_photos = [] # CRITICAL: Stores PhotoImage objects to prevent garbage collection
+        self.emoji_photos = [] 
         self.emoji_image_paths = ['laughing_emoji_1.png', 'laughing_emoji_2.png', 'laughing_emoji_3.png']
 
         self.create_welcome_page()
@@ -119,6 +112,7 @@ class JokeApp:
 
         self.show_frame(self.welcome_frame)
         
+        # Make sure music stops when the window is closed
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def on_closing(self):
@@ -152,10 +146,10 @@ class JokeApp:
         if frame == self.joke_frame:
             self.play_click()
             self.show_setup()
-            # Start emoji animation when entering joke page
+            # Start the emoji animation loop!
             self.start_emoji_animation()
         else:
-            # Stop emoji animation when leaving joke page
+            # Stop animation when leaving the joke page to clean up resources
             self.stop_emoji_animation()
 
 
@@ -206,13 +200,14 @@ class JokeApp:
                                  relief=tk.FLAT, padx=10)
         quit_button.pack(side=tk.RIGHT, padx=15, pady=10)
 
-        # --- Main content area as a Canvas for emojis ---
+        # Main content area as a Canvas for emojis
         self.content_canvas = tk.Canvas(self.joke_frame, bg=COLOR_BACKGROUND, highlightthickness=0)
         self.content_canvas.pack(fill=tk.BOTH, expand=True)
 
         self.joke_text_label = tk.Label(self.content_canvas, text="",
                                          font=self.font_large, fg=COLOR_DARK_TEXT, bg=COLOR_BACKGROUND,
                                          wraplength=800, justify=tk.CENTER)
+        # Use .place() to put the label precisely over the canvas
         self.joke_text_label.place(relx=0.5, rely=0.4, anchor=tk.CENTER)
 
         self.q_mark_canvas = tk.Canvas(self.content_canvas, width=120, height=120,
@@ -232,10 +227,7 @@ class JokeApp:
         self.next_joke_button.pack(padx=10)
 
     def setup_emojis(self):
-        """Initializes emoji objects and places them on the canvas."""
-        
         self.emojis = []
-        # Clear existing PhotoImage references to allow creation of new ones
         self.emoji_photos = [] 
         
         canvas_width = self.content_canvas.winfo_width()
@@ -244,31 +236,30 @@ class JokeApp:
         if canvas_width <= 1 or canvas_height <= 1:
             return 
             
-        target_size = 50 # Desired max dimension for the emoji
+        target_size = 50 
+        num_duplicates_per_emoji = 10    #10 copies for each image file
             
         for path in self.emoji_image_paths:
             if os.path.exists(path):
                 try:
-                    # 1. Load the image
                     original_photo = tk.PhotoImage(file=path)
                     
-                    # Calculate subsample factors for resizing
+                    # Calculate how much to shrink the image
                     subsample_x = max(1, original_photo.width() // target_size)
                     subsample_y = max(1, original_photo.height() // target_size)
                     
-                    # Resize the image using subsample
                     resized_image = original_photo.subsample(subsample_x, subsample_y)
-                    # CRITICAL: Store reference to prevent garbage collection
                     self.emoji_photos.append(resized_image) 
-                    
-                    # 2. Set random position and speed
-                    x = random.randint(target_size, canvas_width - target_size)
-                    y = random.randint(target_size, canvas_height - target_size)
-                    speed_x = random.choice([-2, -1, 1, 2])
-                    speed_y = random.choice([-2, -1, 1, 2])
-                    
-                    # 3. Create the Emoji object
-                    self.emojis.append(Emoji(self.content_canvas, resized_image, x, y, speed_x, speed_y))
+
+                    # Loop to create 10 floating copies of this one resized image
+                    for _ in range(num_duplicates_per_emoji):
+                        # Give each copy a new random start position and speed
+                        x = random.randint(target_size, canvas_width - target_size)
+                        y = random.randint(target_size, canvas_height - target_size)
+                        speed_x = random.choice([-2, -1, 1, 2])
+                        speed_y = random.choice([-2, -1, 1, 2])
+                        
+                        self.emojis.append(Emoji(self.content_canvas, resized_image, x, y, speed_x, speed_y))
                     
                 except tk.TclError as e:
                     print(f"Error loading image {path}: {e}")
@@ -276,36 +267,34 @@ class JokeApp:
                 print(f"Warning: Emoji image file not found: {path}")
 
     def animate_emojis(self):
-        """Moves all emojis and schedules the next animation frame."""
+        """Moves all emojis and schedules the next move after 50ms."""
         for emoji in self.emojis:
             emoji.move()
-        self.animation_job = self.master.after(50, self.animate_emojis) # Update every 50ms
+        self.animation_job = self.master.after(50, self.animate_emojis) # Runs every 50 milliseconds
 
     def start_emoji_animation(self):
-        """Starts the emoji animation if not already running."""
-        # Setup emojis only when the canvas dimensions are available and they haven't been set up yet
-        if not self.emojis:
-            # We use after(100) to ensure the frame has rendered and has dimensions
+        """Starts the emoji animation."""
+        if not self.emojis: 
+            # Wait a moment for the window to draw, then set up and start
             self.master.after(100, lambda: self._start_animation_after_setup())
         else:
-            # If already set up, just restart the animation loop
             if hasattr(self, 'animation_job'):
                 self.master.after_cancel(self.animation_job)
             self.animate_emojis()
             
     def _start_animation_after_setup(self):
-        """Helper to ensure setup runs only after the canvas is fully drawn."""
+        """Makes sure setup runs only once the canvas size is ready."""
         self.setup_emojis()
         if self.emojis:
             self.animate_emojis()
 
     def stop_emoji_animation(self):
-        """Stops the emoji animation."""
+        """Stops the emoji animation and deletes the objects."""
         if hasattr(self, 'animation_job'):
             self.master.after_cancel(self.animation_job)
             del self.animation_job 
         
-        # Clean up canvas items and objects
+        # Delete items from canvas and clear lists
         for emoji in self.emojis:
             self.content_canvas.delete(emoji.id) 
         self.emojis = [] 
@@ -351,12 +340,12 @@ class JokeApp:
         return False
         
     def show_setup_with_click(self):
-        """Wrapper to play click sound before showing the next joke setup."""
+        """Plays click sound and shows the joke setup."""
         self.play_click()
         self.show_setup()
 
     def show_setup(self):
-        """Selects a new joke, displays the setup, and updates button states."""
+        """Selects a new joke and displays the setup text."""
         
         self.q_mark_canvas.place(relx=0.5, rely=0.65, anchor=tk.CENTER)
         
@@ -373,12 +362,12 @@ class JokeApp:
             self.q_mark_canvas.place_forget()
 
     def show_punchline_event(self, event):
-        """Event handler for clicking the question mark button (includes click sound)."""
+        """Event handler for clicking the question mark button."""
         self.play_click()
         self.show_punchline()
 
     def show_punchline(self):
-        """Plays laugh sound, displays the punchline and hides the question mark."""
+        """Plays laugh sound, displays the punchline, and hides the button."""
         if self.current_joke:
             self.play_laugh()
             
