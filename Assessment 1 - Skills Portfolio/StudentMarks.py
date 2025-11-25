@@ -333,6 +333,7 @@ class StudentManagerApp:
         self.status_bar.config(text="Status: Displayed all student records.")
 
     def view_individual_record(self):
+        """Prompts for student number/name prefix and displays the matching record(s)."""
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -340,7 +341,7 @@ class StudentManagerApp:
 
         search_term = simpledialog.askstring(
             "Search Student", 
-            "Enter Student Number (e.g., 8439) or Student Name:", 
+            "Enter Student Number (e.g., 8439) or Student Name prefix (e.g., 'J'):", 
             parent=self.master
         )
 
@@ -348,27 +349,42 @@ class StudentManagerApp:
             self.status_bar.config(text="Status: Individual search cancelled.")
             return
 
-        search_term = search_term.strip()
-        found_student = None
+        search_term = search_term.strip().lower()
+        found_students = []
 
+        # New search logic: Exact match by Number OR starts with name prefix
+        # We process number match first to ensure unique results are prioritized
+        is_exact_number_match = False
         for student in self.students:
-            if student.student_number == search_term:
-                found_student = student
+            # 1. Exact Student Number Match (takes precedence)
+            if student.student_number.lower() == search_term:
+                found_students = [student] # Clear previous partial matches and add exact match
+                is_exact_number_match = True
                 break
-            if search_term.lower() in student.name.lower():
-                found_student = student
-                break
+        
+        # 2. Alphabetic/Prefix search: Name starts with the search term (only if no exact number match)
+        if not is_exact_number_match:
+            for student in self.students:
+                if student.name.lower().startswith(search_term):
+                    found_students.append(student)
 
         self._clear_output(f"Individual Student Record Search: '{search_term}'")
         self.output_area.config(state=tk.NORMAL)
         
-        if found_student:
-            self.output_area.insert(tk.END, "--- Match Found ---\n\n", "match_header")
+        if found_students:
+            # Sort only if it's a name search (not a single exact number match)
+            if len(found_students) > 1:
+                found_students.sort(key=lambda s: s.name.lower())
+                
+            self.output_area.insert(tk.END, f"--- {len(found_students)} Match(es) Found ---\n\n", "match_header")
             self.output_area.tag_config("match_header", font=self.header_font, foreground=self.accent_color)
-            self.output_area.insert(tk.END, found_student.get_formatted_record())
-            self.status_bar.config(text=f"Status: Found record for '{search_term}'.")
+            
+            for student in found_students:
+                self.output_area.insert(tk.END, student.get_formatted_record() + "\n\n")
+
+            self.status_bar.config(text=f"Status: Found {len(found_students)} record(s) for '{search_term}'.")
         else:
-            self.output_area.insert(tk.END, "No student found with that Number or Name.", "error_message")
+            self.output_area.insert(tk.END, "No student found matching that Number or Name prefix.", "error_message")
             self.output_area.tag_config("error_message", foreground=self.highlight_color, font=self.body_font)
             self.status_bar.config(text=f"Status: No record found for '{search_term}'.")
         
