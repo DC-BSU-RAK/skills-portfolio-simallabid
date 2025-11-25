@@ -618,7 +618,7 @@ class StudentManagerApp:
                 self.status_bar.config(text="Status: Delete failed (Save error).")
 
 
-    # --- 8. Update a student's record ---
+    #Update a student's record
     def update_student_record(self):
         if not self.students:
             messagebox.showinfo("Info", "No student data to update.")
@@ -639,7 +639,7 @@ class StudentManagerApp:
             self.status_bar.config(text="Status: Update failed (Student not found).")
             return
 
-        # If multiple students match, require specific Student Number
+        #If multiple students match, require specific Student Number
         if len(found_students) > 1:
             display_list = "\n".join([f"- {s.name} (Num: {s.student_number})" for s in found_students])
             messagebox.showwarning("Ambiguous Search", 
@@ -647,10 +647,10 @@ class StudentManagerApp:
             self.status_bar.config(text="Status: Update failed (Ambiguous match).")
             return
         
-        # Single student found
+        #Single student found
         student_to_update = found_students[0]
 
-        # Helper for input validation and conversion to int for marks
+        #Helper for input validation and conversion to int for marks
         def get_mark_update(prompt, current_val, max_val):
             new_val_str = simpledialog.askstring("Update Mark", 
                                                  f"{prompt} (Current: {current_val}, Max: {max_val})",
@@ -664,12 +664,12 @@ class StudentManagerApp:
                     return value
                 else:
                     messagebox.showwarning("Warning", f"Value must be between 0 and {max_val}.")
-                    return None # Signal invalid input
+                    return None #Signal invalid input
             except ValueError:
                 messagebox.showwarning("Warning", "Invalid input. Please enter a whole number.")
-                return None # Signal invalid input
+                return None #Signal invalid input
 
-        # Sub-menu for field selection (using simpledialog as a makeshift menu)
+        #Sub-menu for field selection (using simpledialog as a makeshift menu)
         update_choice = simpledialog.askstring("Update Field", 
                                                 f"Updating: {student_to_update.name} (Num: {student_to_update.student_number})\n\n"
                                                 "Which field to update?\n"
