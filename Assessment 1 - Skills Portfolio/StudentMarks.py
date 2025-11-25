@@ -4,6 +4,15 @@ from tkinter import simpledialog
 from tkinter import scrolledtext
 from tkinter import font as tkFont
 
+# Attempt to import Pygame for audio, handling potential import errors
+try:
+    import pygame
+    pygame_available = True
+except ImportError:
+    pygame_available = False
+    print("Warning: Pygame not installed. Audio features will be disabled.")
+
+
 # --- Data Structure for Student Records ---
 class Student:
     """Represents a single student's record and calculated results."""
@@ -53,9 +62,11 @@ class Student:
             f"{'=' * 35}"
         )
 
-# --- Data Loading Function (Unchanged) ---
+# --- Data Loading Function ---
 def load_student_data(filename='studentMarks.txt'):
-    # ... (Keep this function as is) ...
+    """
+    Loads student data from the specified file into a list of Student objects.
+    """
     student_list = []
     num_students = 0
     try:
@@ -92,19 +103,20 @@ def load_student_data(filename='studentMarks.txt'):
         messagebox.showerror("Error", f"An unexpected error occurred: {e}")
         return None, 0
 
-# --- Tkinter Application Class (Modified) ---
+# --- Tkinter Application Class ---
 class StudentManagerApp:
     def __init__(self, master):
         self.master = master
         master.title("Student Manager Dashboard")
-        master.geometry("850x750") # Increased size for better layout
+        master.geometry("850x750") 
         master.resizable(True, True)
 
         # --- Color Palette ---
         self.primary_bg = "#2C3E50"      # Dark Blue-Grey (Main window)
         self.action_panel_bg = "#34495E" # Lighter Blue-Grey (Action frame background)
-        self.accent_color = "#1ABC9C"    # Turquoise/Teal (Action buttons)
-        self.highlight_color = "#E74C3C" # Bright Red for emphasis/alerts
+        self.accent_color = "#1ABC9C"    # Turquoise/Teal (Title)
+        self.button_color = "#3498DB"    # Bright Blue (Primary action buttons) 
+        self.highlight_color = "#E74C3C" # Bright Red (Exit/Headers/Alerts)
         self.text_color = "#ECF0F1"      # Light Grey (All text)
         self.output_bg = "#ECF0F1"       # Very light grey (Output area background)
         self.output_fg = "#2C3E50"       # Dark text for output
@@ -114,9 +126,27 @@ class StudentManagerApp:
         # --- Custom Fonts ---
         self.title_font = tkFont.Font(family="Helvetica Neue", size=22, weight="bold")
         self.header_font = tkFont.Font(family="Helvetica Neue", size=16, weight="bold")
-        self.button_font = tkFont.Font(family="Helvetica Neue", size=12, weight="bold") # New font for buttons
+        self.button_font = tkFont.Font(family="Helvetica Neue", size=12, weight="bold") 
         self.body_font = tkFont.Font(family="Fira Code", size=11)
         
+        # --- Audio Setup (Pygame Mixer) ---
+        self.is_playing_audio = False
+        if pygame_available:
+            try:
+                # Initialize mixer with recommended settings
+                pygame.mixer.init(44100, -16, 2, 2048)
+                pygame.mixer.music.load('studentbg.mp3')
+                pygame.mixer.music.play(-1) # Play indefinitely
+                self.is_playing_audio = True
+                print("Background music started.")
+            except pygame.error as e:
+                print(f"Pygame audio error (file missing or mixer failed): {e}")
+                messagebox.showwarning("Audio Warning", "Could not start background music. Ensure 'studentbg.mp3' is in the application directory.")
+                self.is_playing_audio = False
+        
+        # --- Set up protocol handler for graceful exit (stops music) ---
+        master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         # Load data
         self.students, self.num_students = load_student_data()
         
@@ -143,7 +173,6 @@ class StudentManagerApp:
         content_frame = tk.Frame(master, bg=self.primary_bg)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
         
-        # Configure grid weights for responsive layout
         content_frame.grid_columnconfigure(0, weight=0) # Action Panel fixed width
         content_frame.grid_columnconfigure(1, weight=1) # Output Area expands
         content_frame.grid_rowconfigure(0, weight=1)
@@ -153,7 +182,7 @@ class StudentManagerApp:
                                      bg=self.action_panel_bg, 
                                      padx=15, 
                                      pady=15,
-                                     relief=tk.RAISED, # Gives a sense of depth
+                                     relief=tk.RAISED, 
                                      bd=3)
         self.action_frame.grid(row=0, column=0, sticky="nswe", padx=(0, 15))
 
@@ -171,15 +200,15 @@ class StudentManagerApp:
                              text=text,
                              command=command,
                              font=self.button_font,
-                             bg=self.accent_color,
-                             fg=self.primary_bg, # Dark text on bright background
+                             bg=self.button_color, # Use Bright Blue
+                             fg=self.primary_bg, 
                              activebackground=self.highlight_color,
                              activeforeground="white",
                              relief=tk.FLAT,
                              bd=0,
                              padx=10, pady=10)
 
-        # Create Buttons (More visible and clickable than a menu)
+        # Create Buttons 
         self.btn_view_all = create_action_button("1. View All Records", self.view_all_records)
         self.btn_view_all.pack(fill=tk.X, pady=(5, 5))
         
@@ -196,7 +225,7 @@ class StudentManagerApp:
         
         tk.Frame(self.action_frame, height=2, bg=self.primary_bg).pack(fill=tk.X, pady=10) # Separator
         
-        self.btn_exit = create_action_button("Exit Application ❌", master.quit)
+        self.btn_exit = create_action_button("Exit Application ❌", self.on_closing)
         self.btn_exit.config(bg=self.highlight_color, fg="white") # Use red highlight for exit
         self.btn_exit.pack(fill=tk.X, pady=(20, 5), side=tk.BOTTOM)
         
@@ -211,7 +240,7 @@ class StudentManagerApp:
                                                      padx=15,
                                                      pady=15,
                                                      bd=5, 
-                                                     relief=tk.SUNKEN) # Sunken relief for a recessed look
+                                                     relief=tk.SUNKEN)
         self.output_area.grid(row=0, column=1, sticky="nswe")
         
         # Initial Welcome Message
@@ -220,14 +249,19 @@ class StudentManagerApp:
         self.output_area.insert(tk.END, f"Please use the **Action Center** on the left to begin.\n")
         self.output_area.config(state=tk.DISABLED)
         
-        # --- Status Bar (Unchanged) ---
+        # --- Status Bar ---
         self.status_bar = tk.Label(master, text="Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W,
                                    bg=self.action_panel_bg, fg=self.text_color, font=('Helvetica Neue', 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Removed the Menu Bar entirely, as actions are now visible on the side panel.
+    # --- Graceful Exit Handler (Stops audio) ---
+    def on_closing(self):
+        """Stops background music and destroys the window."""
+        if self.is_playing_audio:
+            pygame.mixer.music.stop()
+        self.master.destroy()
 
-    # --- Helper Methods (Modified to use new fonts/tags) ---
+    # --- Helper Methods ---
     def _clear_output(self, title):
         """Clears the output area and prints a title with enhanced styling."""
         self.output_area.config(state=tk.NORMAL)
@@ -259,9 +293,8 @@ class StudentManagerApp:
         self.output_area.tag_config("summary_style", font=self.header_font, foreground=self.accent_color)
         self.output_area.config(state=tk.DISABLED)
 
-    # --- Action Methods (Unchanged functionality) ---
+    # --- Action Methods ---
     def view_all_records(self):
-        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available to display.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -278,7 +311,6 @@ class StudentManagerApp:
         self.status_bar.config(text="Status: Displayed all student records.")
 
     def view_individual_record(self):
-        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -321,7 +353,6 @@ class StudentManagerApp:
         self.output_area.config(state=tk.DISABLED)
 
     def show_highest_score(self):
-        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -336,7 +367,6 @@ class StudentManagerApp:
         self.status_bar.config(text=f"Status: Displayed highest scorer: {highest_scorer.name}.")
 
     def show_lowest_score(self):
-        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -355,3 +385,10 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = StudentManagerApp(root)
     root.mainloop()
+
+    # Quit pygame mixer after Tkinter window closes
+    if pygame_available:
+        try:
+            pygame.quit()
+        except Exception:
+            pass # Ignore if mixer wasn't initialized
