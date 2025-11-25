@@ -612,8 +612,8 @@ class StudentManagerApp:
                 self.output_area.config(state=tk.DISABLED)
                 self.status_bar.config(text=f"Status: Deleted student '{student_to_delete.name}'. Data saved.")
             else:
-                # Critical Error: Data deletion was successful in memory but failed to save. 
-                # Reverting the deletion is complex, so we just inform the user and leave the list in memory.
+                #Critical Error: Data deletion was successful in memory but failed to save. 
+                #Reverting the deletion is complex, so we just inform the user and leave the list in memory.
                 messagebox.showerror("Critical Error", "Failed to save deletion to file. Data in memory may not match file.")
                 self.status_bar.config(text="Status: Delete failed (Save error).")
 
