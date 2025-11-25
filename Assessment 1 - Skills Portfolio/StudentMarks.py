@@ -131,21 +131,34 @@ class StudentManagerApp:
         
         # --- Audio Setup (Pygame Mixer) ---
         self.is_playing_audio = False
+        self.click_sound = None # Initialize click sound variable
         if pygame_available:
             try:
                 # Initialize mixer with recommended settings
                 pygame.mixer.init(44100, -16, 2, 2048)
+                
+                # Load background music
                 pygame.mixer.music.load('studentbg.mp3')
                 pygame.mixer.music.play(-1) # Play indefinitely
+                
+                # Load click sound
+                self.click_sound = pygame.mixer.Sound('studentclick.mp3')
+
                 self.is_playing_audio = True
                 print("Background music started.")
             except pygame.error as e:
                 print(f"Pygame audio error (file missing or mixer failed): {e}")
-                messagebox.showwarning("Audio Warning", "Could not start background music. Ensure 'studentbg.mp3' is in the application directory.")
+                # Updated warning message to include both files
+                messagebox.showwarning("Audio Warning", "Could not start background music or load sound effects. Ensure 'studentbg.mp3' and 'studentclick.mp3' are in the application directory.")
                 self.is_playing_audio = False
         
         # --- Set up protocol handler for graceful exit (stops music) ---
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        # --- Bind mouse click for sound effect ---
+        if self.is_playing_audio and self.click_sound:
+            # <Button-1> binds to the left mouse button click
+            master.bind('<Button-1>', self.play_click_sound) 
 
         # Load data
         self.students, self.num_students = load_student_data()
@@ -260,6 +273,15 @@ class StudentManagerApp:
         if self.is_playing_audio:
             pygame.mixer.music.stop()
         self.master.destroy()
+
+    # --- New: Mouse Click Sound Player ---
+    def play_click_sound(self, event):
+        """Plays the click sound effect when the mouse button is pressed."""
+        if self.click_sound:
+            # Check if the click event originated from the output text area
+            # We skip clicks on the output area to avoid noise when scrolling/selecting text.
+            if event.widget != self.output_area:
+                self.click_sound.play()
 
     # --- Helper Methods ---
     def _clear_output(self, title):
