@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import scrolledtext
-from tkinter import font as tkFont # Import font module for custom fonts
+from tkinter import font as tkFont
 
-# --- Data Structure for Student Records (remains the same) ---
+# --- Data Structure for Student Records ---
 class Student:
     """Represents a single student's record and calculated results."""
     def __init__(self, student_number, name, course1, course2, course3, exam_mark):
@@ -28,7 +28,7 @@ class Student:
         return (self.get_overall_total() / 160) * 100
 
     def get_grade(self):
-        """Determines the student's grade based on percentage."""
+        """Determines the student's grade based on percentage (as per specs)."""
         percent = self.get_percentage()
         if percent >= 70:
             return 'A'
@@ -43,23 +43,19 @@ class Student:
 
     def get_formatted_record(self):
         """Returns a string with the full formatted record for display."""
-        # Enhanced formatting for better readability
         return (
-            f"  Name: {self.name}\n"
-            f"  Number: {self.student_number}\n"
-            f"  Coursework: {self.get_coursework_total():<3} / 60\n"
-            f"  Exam Mark: {self.exam_mark:<3} / 100\n"
-            f"  Overall %: {self.get_percentage():<6.2f}%\n"
-            f"  Grade: {self.get_grade()}\n"
-            f"{'=' * 35}" # Separator for individual records
+            f"  Name: {self.name}\n"
+            f"  Number: {self.student_number}\n"
+            f"  Total Coursework: {self.get_coursework_total():<3} / 60\n"
+            f"  Exam Mark: {self.exam_mark:<3} / 100\n"
+            f"  Overall Percentage: {self.get_percentage():<6.2f}%\n"
+            f"  Student Grade: {self.get_grade()}\n"
+            f"{'=' * 35}"
         )
 
-# --- Data Loading Function (remains the same) ---
+# --- Data Loading Function (Unchanged) ---
 def load_student_data(filename='studentMarks.txt'):
-    """
-    Loads student data from the specified file into a list of Student objects.
-    Returns: A tuple (list of Student objects, number of students) or (None, 0) on error.
-    """
+    # ... (Keep this function as is) ...
     student_list = []
     num_students = 0
     try:
@@ -67,9 +63,7 @@ def load_student_data(filename='studentMarks.txt'):
             lines = file.readlines()
             if not lines:
                 raise ValueError("File is empty.")
-
             num_students = int(lines[0].strip())
-
             for line in lines[1:]:
                 parts = [p.strip() for p in line.split(',')]
                 if len(parts) == 6:
@@ -85,119 +79,162 @@ def load_student_data(filename='studentMarks.txt'):
                         print(f"Skipping line due to invalid mark data: {line.strip()}")
                 else:
                     print(f"Skipping line due to incorrect format: {line.strip()}")
-
         if len(student_list) != num_students:
-             print(f"Warning: Expected {num_students} students, but loaded {len(student_list)}.")
-
+              print(f"Warning: Expected {num_students} students, but loaded {len(student_list)}.")
         return student_list, len(student_list)
-
     except FileNotFoundError:
-        messagebox.showerror("File Error", f"The file '{filename}' was not found. Please ensure it is in the correct directory.")
+        messagebox.showerror("File Error", f"The file '{filename}' was not found.")
         return None, 0
     except ValueError as e:
-        messagebox.showerror("Data Error", f"Error processing data: {e}. Check the format of the first line.")
+        messagebox.showerror("Data Error", f"Error processing data: {e}. Check the file format.")
         return None, 0
     except Exception as e:
         messagebox.showerror("Error", f"An unexpected error occurred: {e}")
         return None, 0
 
-# --- Tkinter Application Class ---
+# --- Tkinter Application Class (Modified) ---
 class StudentManagerApp:
     def __init__(self, master):
         self.master = master
         master.title("Student Manager Dashboard")
-        master.geometry("700x700") # Set initial window size
-        master.resizable(True, True) # Allow resizing
+        master.geometry("850x750") # Increased size for better layout
+        master.resizable(True, True)
 
         # --- Color Palette ---
-        self.primary_bg = "#2C3E50" # Dark Blue-Grey
-        self.secondary_bg = "#34495E" # Slightly lighter Blue-Grey
-        self.accent_color = "#1ABC9C" # Turquoise/Teal
-        self.text_color = "#ECF0F1" # Light Grey
-        self.highlight_color = "#3498DB" # Brighter Blue for emphasis
-        self.output_bg = "#ECF0F1" # Very light grey for output area
-        self.output_fg = "#2C3E50" # Dark text for output
+        self.primary_bg = "#2C3E50"      # Dark Blue-Grey (Main window)
+        self.action_panel_bg = "#34495E" # Lighter Blue-Grey (Action frame background)
+        self.accent_color = "#1ABC9C"    # Turquoise/Teal (Action buttons)
+        self.highlight_color = "#E74C3C" # Bright Red for emphasis/alerts
+        self.text_color = "#ECF0F1"      # Light Grey (All text)
+        self.output_bg = "#ECF0F1"       # Very light grey (Output area background)
+        self.output_fg = "#2C3E50"       # Dark text for output
 
-        master.config(bg=self.primary_bg) # Set main window background
+        master.config(bg=self.primary_bg)
 
         # --- Custom Fonts ---
-        self.title_font = tkFont.Font(family="Helvetica Neue", size=20, weight="bold")
-        self.header_font = tkFont.Font(family="Helvetica Neue", size=14, weight="bold")
-        self.body_font = tkFont.Font(family="Fira Code", size=11) # Monospace for output readability
-        self.menu_font = tkFont.Font(family="Helvetica Neue", size=11)
-
-
-        # Load data immediately upon starting the app
+        self.title_font = tkFont.Font(family="Helvetica Neue", size=22, weight="bold")
+        self.header_font = tkFont.Font(family="Helvetica Neue", size=16, weight="bold")
+        self.button_font = tkFont.Font(family="Helvetica Neue", size=12, weight="bold") # New font for buttons
+        self.body_font = tkFont.Font(family="Fira Code", size=11)
+        
+        # Load data
         self.students, self.num_students = load_student_data()
         
         if not self.students:
-            messagebox.showerror("Initialization Error", "Could not load student data. Application will be limited.")
+            messagebox.showerror("Initialization Error", "Could not load student data.")
             self.students = []
             self.num_students = 0
 
-        # --- GUI Setup ---
-        # Title Label
-        self.title_label = tk.Label(master, 
-                                     text="Student Performance Manager", 
-                                     font=self.title_font, 
-                                     bg=self.primary_bg, 
-                                     fg=self.accent_color)
-        self.title_label.pack(pady=(20, 15)) # More vertical padding
+        # --- GUI Layout (Grid System) ---
+        
+        # 1. Title Bar
+        title_frame = tk.Frame(master, bg=self.primary_bg)
+        title_frame.pack(side=tk.TOP, fill=tk.X)
 
-        # Output Text Area (ScrolledText for multi-line output)
-        self.output_area = scrolledtext.ScrolledText(master, 
-                                                     width=70, 
-                                                     height=20, 
+        self.title_label = tk.Label(title_frame, 
+                                    text="📊 Student Performance Dashboard", 
+                                    font=self.title_font, 
+                                    bg=self.primary_bg, 
+                                    fg=self.accent_color,
+                                    pady=15)
+        self.title_label.pack()
+
+        # 2. Main Content Frame (Uses Grid)
+        content_frame = tk.Frame(master, bg=self.primary_bg)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
+        
+        # Configure grid weights for responsive layout
+        content_frame.grid_columnconfigure(0, weight=0) # Action Panel fixed width
+        content_frame.grid_columnconfigure(1, weight=1) # Output Area expands
+        content_frame.grid_rowconfigure(0, weight=1)
+
+        # --- Action Panel (Column 0) ---
+        self.action_frame = tk.Frame(content_frame, 
+                                     bg=self.action_panel_bg, 
+                                     padx=15, 
+                                     pady=15,
+                                     relief=tk.RAISED, # Gives a sense of depth
+                                     bd=3)
+        self.action_frame.grid(row=0, column=0, sticky="nswe", padx=(0, 15))
+
+        self.action_header = tk.Label(self.action_frame, 
+                                     text="Action Center ⬇️", 
+                                     font=self.header_font, 
+                                     fg=self.highlight_color, 
+                                     bg=self.action_panel_bg,
+                                     pady=10)
+        self.action_header.pack(fill=tk.X)
+        
+        # Function to create standardized, styled buttons
+        def create_action_button(text, command):
+            return tk.Button(self.action_frame,
+                             text=text,
+                             command=command,
+                             font=self.button_font,
+                             bg=self.accent_color,
+                             fg=self.primary_bg, # Dark text on bright background
+                             activebackground=self.highlight_color,
+                             activeforeground="white",
+                             relief=tk.FLAT,
+                             bd=0,
+                             padx=10, pady=10)
+
+        # Create Buttons (More visible and clickable than a menu)
+        self.btn_view_all = create_action_button("1. View All Records", self.view_all_records)
+        self.btn_view_all.pack(fill=tk.X, pady=(5, 5))
+        
+        self.btn_view_individual = create_action_button("2. Search Student", self.view_individual_record)
+        self.btn_view_individual.pack(fill=tk.X, pady=5)
+        
+        tk.Frame(self.action_frame, height=2, bg=self.primary_bg).pack(fill=tk.X, pady=10) # Separator
+        
+        self.btn_highest = create_action_button("3. Show Highest Score 🏆", self.show_highest_score)
+        self.btn_highest.pack(fill=tk.X, pady=5)
+        
+        self.btn_lowest = create_action_button("4. Show Lowest Score 📉", self.show_lowest_score)
+        self.btn_lowest.pack(fill=tk.X, pady=5)
+        
+        tk.Frame(self.action_frame, height=2, bg=self.primary_bg).pack(fill=tk.X, pady=10) # Separator
+        
+        self.btn_exit = create_action_button("Exit Application ❌", master.quit)
+        self.btn_exit.config(bg=self.highlight_color, fg="white") # Use red highlight for exit
+        self.btn_exit.pack(fill=tk.X, pady=(20, 5), side=tk.BOTTOM)
+        
+        # --- Output Display Area (Column 1) ---
+        self.output_area = scrolledtext.ScrolledText(content_frame, 
+                                                     width=50, 
+                                                     height=30, 
                                                      wrap=tk.WORD, 
                                                      font=self.body_font,
                                                      bg=self.output_bg,
                                                      fg=self.output_fg,
-                                                     padx=10,
-                                                     pady=10,
-                                                     bd=2, # Border for definition
-                                                     relief=tk.FLAT) # Flat border
-        self.output_area.pack(padx=20, pady=10, fill=tk.BOTH, expand=True) # Fill and expand
-        self.output_area.insert(tk.END, f"Welcome to the Student Manager!\n\n")
-        self.output_area.insert(tk.END, f"Successfully loaded {self.num_students} student records from 'studentMarks.txt'.\n")
-        self.output_area.insert(tk.END, f"Please select an action from the 'Actions' menu above.")
-        self.output_area.config(state=tk.DISABLED) # Make it read-only
+                                                     padx=15,
+                                                     pady=15,
+                                                     bd=5, 
+                                                     relief=tk.SUNKEN) # Sunken relief for a recessed look
+        self.output_area.grid(row=0, column=1, sticky="nswe")
         
-        # --- Menu Bar Setup ---
-        menubar = tk.Menu(master, bg=self.secondary_bg, fg=self.text_color, 
-                          font=self.menu_font, relief=tk.FLAT)
-        master.config(menu=menubar)
-
-        action_menu = tk.Menu(menubar, tearoff=0, 
-                             bg=self.secondary_bg, fg=self.text_color, 
-                             activebackground=self.highlight_color, 
-                             activeforeground="white", font=self.menu_font,
-                             relief=tk.FLAT, bd=0) # Flat and no border for menu
-
-        menubar.add_cascade(label="Actions", menu=action_menu, 
-                            activebackground=self.highlight_color, 
-                            activeforeground="white") # Highlight main menu item
-
-        action_menu.add_command(label="1. View All Student Records", command=self.view_all_records)
-        action_menu.add_command(label="2. View Individual Student Record", command=self.view_individual_record)
-        action_menu.add_separator(background=self.primary_bg) # Separator with background
-        action_menu.add_command(label="3. Show Student with Highest Total Score", command=self.show_highest_score)
-        action_menu.add_command(label="4. Show Student with Lowest Total Score", command=self.show_lowest_score)
-        action_menu.add_separator(background=self.primary_bg)
-        action_menu.add_command(label="Exit Application", command=master.quit) # More descriptive exit label
-
-        # --- Status Bar (optional but good for aesthetics) ---
+        # Initial Welcome Message
+        self.output_area.insert(tk.END, f"Welcome to the Student Manager!\n\n")
+        self.output_area.insert(tk.END, f"Successfully loaded {self.num_students} student records.\n")
+        self.output_area.insert(tk.END, f"Please use the **Action Center** on the left to begin.\n")
+        self.output_area.config(state=tk.DISABLED)
+        
+        # --- Status Bar (Unchanged) ---
         self.status_bar = tk.Label(master, text="Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W,
-                                    bg=self.secondary_bg, fg=self.text_color, font=('Helvetica Neue', 9))
+                                   bg=self.action_panel_bg, fg=self.text_color, font=('Helvetica Neue', 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+        # Removed the Menu Bar entirely, as actions are now visible on the side panel.
+
+    # --- Helper Methods (Modified to use new fonts/tags) ---
     def _clear_output(self, title):
         """Clears the output area and prints a title with enhanced styling."""
         self.output_area.config(state=tk.NORMAL)
         self.output_area.delete(1.0, tk.END)
         
-        # Title for the output area
-        self.output_area.insert(tk.END, f"{'='*10} {title.upper()} {'='*10}\n\n", "header_style") # Use a tag for styling
-        self.output_area.tag_config("header_style", font=self.header_font, foreground=self.accent_color)
+        self.output_area.insert(tk.END, f"{'='*10} {title.upper()} {'='*10}\n\n", "header_style")
+        self.output_area.tag_config("header_style", font=self.header_font, foreground=self.highlight_color)
         
         self.output_area.config(state=tk.DISABLED)
         self.status_bar.config(text=f"Action: {title}")
@@ -213,42 +250,40 @@ class StudentManagerApp:
 
         summary = (
             f"\n\n{'=' * 10} CLASS SUMMARY {'=' * 10}\n"
-            f"  Number of Students: {self.num_students}\n"
-            f"  Average Percentage: {average_percentage:.2f}%\n"
+            f"  Number of Students: {self.num_students}\n"
+            f"  Average Percentage: {average_percentage:.2f}%\n"
             f"{'=' * 35}"
         )
         self.output_area.config(state=tk.NORMAL)
         self.output_area.insert(tk.END, summary, "summary_style")
-        self.output_area.tag_config("summary_style", font=self.header_font, foreground=self.highlight_color)
+        self.output_area.tag_config("summary_style", font=self.header_font, foreground=self.accent_color)
         self.output_area.config(state=tk.DISABLED)
 
-    # --- Menu Item 1: View all student records ---
+    # --- Action Methods (Unchanged functionality) ---
     def view_all_records(self):
-        """Displays all student records and the class summary."""
+        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available to display.")
             self.status_bar.config(text="Status: No data loaded.")
             return
 
         self._clear_output("All Student Records")
-        self.output_area.config(state=tk.NORMAL) # Enable writing
+        self.output_area.config(state=tk.NORMAL)
 
         for student in self.students:
-            self.output_area.insert(tk.END, student.get_formatted_record() + "\n\n") # Added extra newlines for spacing
+            self.output_area.insert(tk.END, student.get_formatted_record() + "\n\n")
         
         self._display_summary()
-        self.output_area.config(state=tk.DISABLED) # Disable writing again
+        self.output_area.config(state=tk.DISABLED)
         self.status_bar.config(text="Status: Displayed all student records.")
 
-    # --- Menu Item 2: View individual student record ---
     def view_individual_record(self):
-        """Prompts for student number/name and displays the matching record."""
+        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
             return
 
-        # Simpledialog can't be styled much, but will inherit system theme or Tkinter's basic colors.
         search_term = simpledialog.askstring(
             "Search Student", 
             "Enter Student Number (e.g., 8439) or Student Name:", 
@@ -257,7 +292,7 @@ class StudentManagerApp:
 
         if search_term is None or search_term.strip() == "":
             self.status_bar.config(text="Status: Individual search cancelled.")
-            return # User cancelled or entered nothing
+            return
 
         search_term = search_term.strip()
         found_student = None
@@ -280,14 +315,13 @@ class StudentManagerApp:
             self.status_bar.config(text=f"Status: Found record for '{search_term}'.")
         else:
             self.output_area.insert(tk.END, "No student found with that Number or Name.", "error_message")
-            self.output_area.tag_config("error_message", foreground="red", font=self.body_font)
+            self.output_area.tag_config("error_message", foreground=self.highlight_color, font=self.body_font)
             self.status_bar.config(text=f"Status: No record found for '{search_term}'.")
         
         self.output_area.config(state=tk.DISABLED)
 
-    # --- Menu Item 3: Show student with highest total score ---
     def show_highest_score(self):
-        """Finds and displays the student with the highest total score."""
+        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
@@ -301,9 +335,8 @@ class StudentManagerApp:
         self.output_area.config(state=tk.DISABLED)
         self.status_bar.config(text=f"Status: Displayed highest scorer: {highest_scorer.name}.")
 
-    # --- Menu Item 4: Show student with lowest total score ---
     def show_lowest_score(self):
-        """Finds and displays the student with the lowest total score."""
+        # ... (Functionality remains the same) ...
         if not self.students:
             messagebox.showinfo("Info", "No student data available.")
             self.status_bar.config(text="Status: No data loaded.")
